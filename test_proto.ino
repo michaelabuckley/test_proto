@@ -28,7 +28,6 @@ void pinSetup() {
   digitalWrite(PIN_TB1, LOW);
   pinMode(PIN_TC1, INPUT);
   digitalWrite(PIN_TC1, LOW);
-
 }
 
 void setup() {
@@ -44,30 +43,10 @@ void setup() {
 
   Serial.println("IO test");
 
-  // text display tests
-  display.setTextSize(2);
-  // SSD1306_INVERSE
-  // display.setTextColor(SSD1306_WHITE);
-  // display.setCursor(0,0);
-
-  // display.println("A y.x   B 1.2   C 1.2");
-  // display.println("   AB 1.2   BC 1.2");
-  // display.print("Connecting to SSID\n'adafruit':");
-  // display.print("connected!");
-  // display.println("IP: 10.0.1.23");
-  // display.println("Sending val #0");
-  display.setCursor(0,0);
-  display.display(); // actually display all of the above
-
   analogSetup();
   pinSetup();
 }
 
-
-float r_x_display = 42.2;
-int s = 18;
-
-//define PIN_TA PIN_A4;
 
 uint32_t adc_AA1;
 uint32_t adc_AB;
@@ -91,8 +70,30 @@ uint32_t samplePinWithPinLow(uint32_t samplePin, uint32_t lowPin) {
 }
 
 void loop() {
-  bool enabled = false;
-  bool value = false;
+  Serial.println("loop()");
+
+  adc_AA1 = samplePinWithPinLow(PIN_TA, PIN_TA1);
+  adc_AB = samplePinWithPinLow(PIN_TA, PIN_TB);
+  adc_AC = samplePinWithPinLow(PIN_TA, PIN_TC);
+  adc_BB1 = samplePinWithPinLow(PIN_TB, PIN_TB1);
+  adc_BC = samplePinWithPinLow(PIN_TB, PIN_TC);
+  adc_CC1 = samplePinWithPinLow(PIN_TC, PIN_TC1);
+
+  Serial.printf("raw adc_AA1: %4d\n", adc_AA1);
+
+ // double height.
+  display.setTextSize(1,2);
+// erase as we write text
+  display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+  //display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,0);
+
+  display.printf("A %4d  B %4d C %4d\n", adc_AA1, adc_BB1, adc_CC1);
+  display.printf("AB%4d AC %4d BC%4d\n", adc_AB, adc_AC, adc_BC);
+
+  display.display();
+
+
   // if(!digitalRead(BUTTON_A)) {
   //   pinMode(PIN_A3, OUTPUT);
   //   digitalWrite(PIN_A3, LOW);
@@ -121,32 +122,6 @@ void loop() {
   //   pinMode(PIN_A4, INPUT);
   // }
 
-
-  Serial.println("loop()");
-  Serial.printf("Hello %d d \n", s);
-  Serial.print(r_x_display, 3);           
-  Serial.printf(" f %.2f \n", r_x_display);
-
-
-  adc_AA1 = samplePinWithPinLow(PIN_TA, PIN_TA1);
-  adc_AB = samplePinWithPinLow(PIN_TA, PIN_TB);
-  adc_AC = samplePinWithPinLow(PIN_TA, PIN_TC);
-  adc_BB1 = samplePinWithPinLow(PIN_TB, PIN_TB1);
-  adc_BC = samplePinWithPinLow(PIN_TB, PIN_TC);
-  adc_CC1 = samplePinWithPinLow(PIN_TC, PIN_TC1);
-
-  Serial.printf("raw adc_AA1: %4d\n", adc_AA1);
-
-  display.setTextSize(1,2);
-// erase as we write text
-  display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
-  //display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0,0);
-
-  display.printf("A %4d  B %4d C %4d\n", adc_AA1, adc_BB1, adc_CC1);
-  display.printf("AB%4d AC %4d BC%4d\n", adc_AB, adc_AC, adc_BC);
-
-  display.display();
 }
 
 
