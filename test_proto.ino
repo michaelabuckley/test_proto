@@ -134,48 +134,8 @@ void loop() {
   adc_BB1 = samplePinWithPinLow(PIN_TB, PIN_TB1);
   adc_BC = samplePinWithPinLow(PIN_TB, PIN_TC);
   adc_CC1 = samplePinWithPinLow(PIN_TC, PIN_TC1);
-  // pinMode(PIN_A3, OUTPUT);
-  // digitalWrite(PIN_A3, LOW);
-  // //delay(10); yield();//  sleep(10);
-  // adc_AA1 = analogReadOversample(PIN_A0, 16);
-  // pinMode(PIN_A3, INPUT);
 
-  // pinMode(PIN_A1, OUTPUT);
-  // digitalWrite(PIN_A1, LOW);
-  // //delay(10); yield();//  sleep(10);
-  // adc_AB = analogReadOversample(PIN_A0, 16);
-  // pinMode(PIN_A1, INPUT);
-
-  // pinMode(PIN_A2, OUTPUT);
-  // digitalWrite(PIN_A2, LOW);
-  // delay(10); yield();//  sleep(10);
-  // adc_AC = analogReadOversample(PIN_A0, 16);
-  // pinMode(PIN_A2, INPUT);
-
-  // adc_BB1 = samplePinWithPinLow(PIN_A1, PIN_A5);
-  // adc_BC = samplePinWithPinLow(PIN_A1, PIN_A2);
-  // adc_CC1 = samplePinWithPinLow(PIN_A2, PIN_A6);
-  // adc_AA1 = analogReadOversample(PIN_A0, 16);
-  // adc_BB1 = analogReadOversample(PIN_A1, 16);
-  // adc_CC1 = analogReadOversample(PIN_A2, 16);
-
-  // float adc_norm = (adc_read/adc_scale)/adc_gain;
-  // float r_x = r_ref * (adc_norm / (1.0 - adc_norm));
-  // r_x_display = (r_x + r_x_display) / 2;
-  // // Serial.println(r_x);
   Serial.printf("raw adc_AA1: %4d\n", adc_AA1);
-
-
-  // display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
-  // display.setTextSize(1,2);
-  // display.setCursor(0,0);
-  // display.clearDisplay();
-
-  // display.printf("A %2.2f \n", r_x_display);
-  // display.println("   AB xxx   BC xxx");
-
-  // display.println("A 2.2   B 1.2   C 1.2");
-  // display.println("   AB 1.2   BC 1.2");
 
   display.setTextSize(1,2);
 // erase as we write text
@@ -187,8 +147,6 @@ void loop() {
   display.printf("AB%4d AC %4d BC%4d\n", adc_AB, adc_AC, adc_BC);
 
   display.display();
-
-
 }
 
 
