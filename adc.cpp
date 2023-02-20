@@ -43,9 +43,9 @@ uint32_t samplePinWithPinLow(uint32_t samplePin, uint32_t lowPin) {
 
   pinMode(lowPin, OUTPUT);
   digitalWrite(lowPin, LOW);
-  // sleep(10);
-  Serial.printf("Set       %d low \n", lowPin);
-  Serial.printf("Readback  %d %d \n", lowPin, digitalRead(lowPin));
+  delay(1);
+  // Serial.printf("Set       %d low \n", lowPin);
+  // Serial.printf("Readback  %d %d \n", lowPin, digitalRead(lowPin));
 
   uint32_t result = analogReadOversample(samplePin, 16);
   pinMode(lowPin, INPUT);

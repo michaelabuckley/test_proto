@@ -11,6 +11,6 @@
 #define PIN_TB1 0
 #define PIN_TC1 1
 
-#define PIN_TADrv (13u)
-#define PIN_TBDrv (12u)
-#define PIN_TCDrv (11u)
+#define PIN_TADrv (12u)
+#define PIN_TBDrv (11u)
+#define PIN_TCDrv (10u)

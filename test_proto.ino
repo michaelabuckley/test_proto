@@ -38,9 +38,9 @@ uint32_t calib_10_delta;
 
 uint32_t covert_to_ohms(uint32_t sample) {
   uint32_t result = ((sample - calib_floor) * CALIB_10 * 10) / (calib_10_delta);
-  if (result > 9999) {
-    result = 9999;
-  }
+  // if (result > 9999) {
+  //   result = 9999;
+  // }
   return result;
 }
 
@@ -98,8 +98,7 @@ void loop() {
 
   samplePins();
 
-  Serial.printf("raw adc_AA1: %4d\n", adc_AA1);
-  Serial.printf("raw adc_AA1: %4d\n", adc_AA1);
+  Serial.printf("raw adc_BB1: %4d\n", adc_BB1);
 
   r_AA1 = covert_to_ohms(adc_AA1);
   r_AB = covert_to_ohms(adc_AB);
