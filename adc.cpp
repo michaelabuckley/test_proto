@@ -1,3 +1,4 @@
+#include "wiring_analog.h"
 #include "board_wiring.h"
 #include "adc.h"
 
@@ -7,8 +8,10 @@ float adc_scale = 4095.0F;
 //char adc_bits = 10;
 //float adc_scale = 1023.0F;
 //int adc_gain = 1;
-int adc_gain = 8;
+const int adc_gain = 4;
 //int adc_gain = 16;
+const int adc_oversample = 16;
+
 
 
 const char adc_norm_scale = 1ul<<(adc_bits_norm - adc_bits);
@@ -20,7 +23,8 @@ int32_t calib_10_delta;
 #define CALIB_10 10
 
 Sample adc = {0};
-Sample display_resistance = {0};
+Sample avg_resistance = {0};
+Sample max_resistance = {0};
 
 #define ADC_SAMPLE_COUNT (4)
 
@@ -48,21 +52,37 @@ void smooth_samples() {
   }
 }
 
+void check_floor(Sample *sample) {
+  sample_t new_floor = min(min(min(min(min(
+       sample->sAA1,
+       sample->sAB),
+       sample->sAC),
+       sample->sBB1),
+       sample->sBC),
+       sample->sCC1);
+  if (new_floor < calib_floor) {
+    Serial.printf("Floor change from %d to %d\n", calib_floor, new_floor);
+    calib_floor = new_floor;
+  }
+}
+
 void take_sample() {
   Sample *s = &adc_samples[current_adc_sample];
   samplePins(s);
+  check_floor(s);
+  current_adc_sample = (current_adc_sample + 1) % ADC_SAMPLE_COUNT;
 
   smooth_samples();
 
-  convert_to_ohms(&adc_max, &display_resistance);
-
-  current_adc_sample = (current_adc_sample + 1) % ADC_SAMPLE_COUNT;
+  convert_to_ohms(&adc_avg, &avg_resistance);
+  convert_to_ohms(&adc_max, &max_resistance);
 }
 
 
 void analogSetup() {
   analogReadResolution(adc_bits);
-  analogReference(AR_EXTERNAL);
+  //analogReference(AR_EXTERNAL);
+  analogReference(AR_DEFAULT);
   if (adc_gain == 1) {
     ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val;
   } else if (adc_gain == 2) {
@@ -94,7 +114,7 @@ uint32_t samplePinWithPinLow(uint32_t samplePin, uint32_t lowPin) {
   // Serial.printf("Set       %d low \n", lowPin);
   // Serial.printf("Readback  %d %d \n", lowPin, digitalRead(lowPin));
 
-  uint32_t result = analogReadOversample(samplePin, 16);
+  uint32_t result = analogReadOversample(samplePin, adc_oversample);
   pinMode(lowPin, INPUT);
   return result;
 }
@@ -113,6 +133,13 @@ void calibrateLevels() {
   pinMode(PIN_TA, INPUT);
   pinMode(PIN_TA_10, INPUT);
 
+}
+
+/**
+ * Use current AA1 as 0.
+ */
+void external_calibration() {
+  calib_floor = adc_avg.sAA1;
 }
 
 

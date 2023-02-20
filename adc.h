@@ -17,7 +17,8 @@ typedef union {
 } Sample;
 
 
-extern Sample display_resistance;
+extern Sample avg_resistance;
+extern Sample max_resistance;
 
 void analogSetup();
 
@@ -29,3 +30,4 @@ uint32_t samplePinWithPinLow(uint32_t samplePin, uint32_t lowPin);
 void samplePins(Sample *sample);
 void convert_to_ohms(Sample *in_adc, Sample *out_r);
 void calibrateLevels();
+void external_calibration();
