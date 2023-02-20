@@ -26,12 +26,35 @@ Sample display_resistance = {0};
 
 int current_adc_sample = 0;
 Sample adc_samples[ADC_SAMPLE_COUNT];
+Sample adc_avg;
+Sample adc_max;
+
+void smooth_samples() {
+  adc_avg = (const Sample){ 0 };
+  adc_max = (const Sample){ 0 };
+  for (int i=0; i<ADC_SAMPLE_COUNT; i+=1) {
+    for (int j=0; j<SAMPLE_COMPONENT_COUNT; j+=1) {
+      sample_t v = adc_samples[i].component[j];
+      adc_avg.component[j] += v;
+
+      sample_t cur_max = adc_max.component[j];
+      if (v > cur_max) {
+        adc_max.component[j] = v;
+      }
+    }
+  }
+  for (int j=0; j<6; j+=1) {
+    adc_avg.component[j] /= ADC_SAMPLE_COUNT;
+  }
+}
 
 void take_sample() {
   Sample *s = &adc_samples[current_adc_sample];
   samplePins(s);
 
-  convert_to_ohms(s, &display_resistance);
+  smooth_samples();
+
+  convert_to_ohms(&adc_max, &display_resistance);
 
   current_adc_sample = (current_adc_sample + 1) % ADC_SAMPLE_COUNT;
 }
