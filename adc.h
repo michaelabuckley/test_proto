@@ -16,6 +16,9 @@ typedef union {
 
 void analogSetup();
 
+void take_sample();
+
+
 uint32_t analogReadOversample(uint32_t pin, char samples);
 uint32_t samplePinWithPinLow(uint32_t samplePin, uint32_t lowPin);
 void samplePins(Sample *sample);

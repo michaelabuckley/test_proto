@@ -18,9 +18,7 @@
 
 
 // 6 samples we collect.  ADC samples are < 16 bits.  int32 is large enough to do sums
-
-Sample adc = {0};
-Sample display_resistance = {0};
+extern Sample display_resistance;
 
 void pinSetup() {
   digitalWrite(PIN_TADrv, HIGH);
@@ -60,10 +58,7 @@ void setup() {
 
 void loop() {
   //Serial.println("loop()");
-
-  samplePins(&adc);
-
-  convert_to_ohms(&adc, &display_resistance);
+  take_sample();
 
   Sample *r = &display_resistance;
 

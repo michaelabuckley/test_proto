@@ -19,6 +19,14 @@ int32_t calib_floor;
 int32_t calib_10_delta;
 #define CALIB_10 10
 
+Sample adc = {0};
+Sample display_resistance = {0};
+
+void take_sample() {
+  samplePins(&adc);
+
+  convert_to_ohms(&adc, &display_resistance);
+}
 
 
 void analogSetup() {
