@@ -7,18 +7,7 @@
 #include "adc.h"
 #include "oled.h"
 
-//char *button_display = " ";
 
-
-// int count = 0;
-// #define PIN_D5 (5u)
-// int p_test = 5;
-// float r_ref = 3570.0F;
-
-
-
-// 6 samples we collect.  ADC samples are < 16 bits.  int32 is large enough to do sums
-extern Sample display_resistance;
 
 void pinSetup() {
   digitalWrite(PIN_TADrv, HIGH);

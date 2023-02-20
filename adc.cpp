@@ -22,10 +22,18 @@ int32_t calib_10_delta;
 Sample adc = {0};
 Sample display_resistance = {0};
 
-void take_sample() {
-  samplePins(&adc);
+#define ADC_SAMPLE_COUNT (4)
 
-  convert_to_ohms(&adc, &display_resistance);
+int current_adc_sample = 0;
+Sample adc_samples[ADC_SAMPLE_COUNT];
+
+void take_sample() {
+  Sample *s = &adc_samples[current_adc_sample];
+  samplePins(s);
+
+  convert_to_ohms(s, &display_resistance);
+
+  current_adc_sample = (current_adc_sample + 1) % ADC_SAMPLE_COUNT;
 }
 
 

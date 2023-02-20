@@ -1,6 +1,7 @@
 #include <SPI.h>
 #include <Wire.h>
 
+// 6 samples we collect.  ADC samples are < 16 bits.  int32 is large enough to do sums and conversions
 typedef union {
   struct {
     int32_t sAA1;
@@ -13,6 +14,8 @@ typedef union {
   int32_t sample[6];
 } Sample;
 
+
+extern Sample display_resistance;
 
 void analogSetup();
 
