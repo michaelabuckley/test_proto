@@ -5,6 +5,7 @@
 
 #include "adc.h"
 #include "oled.h"
+#include "board_wiring.h"
 
 //char *button_display = " ";
 
@@ -14,14 +15,56 @@ int count = 0;
 int p_test = 5;
 float r_ref = 3570.0F;
 
-#define PIN_TA PIN_A0
-#define PIN_TB PIN_A1
-#define PIN_TC PIN_A2
-#define PIN_TA1 PIN_A3
-#define PIN_TB1 PIN_A4
-#define PIN_TC1 PIN_A5
+uint32_t adc_AA1;
+uint32_t adc_AB;
+uint32_t adc_AC;
+uint32_t adc_BB1;
+uint32_t adc_BC;
+uint32_t adc_CC1;
+
+uint32_t r_AA1;
+uint32_t r_AB;
+uint32_t r_AC;
+uint32_t r_BB1;
+uint32_t r_BC;
+uint32_t r_CC1;
+
+// adc read with pin low
+uint32_t calib_floor;
+// adc read with pin 10 ohm to low
+uint32_t calib_10_delta;
+#define CALIB_10 10
+
+
+uint32_t covert_to_ohms(uint32_t sample) {
+  uint32_t result = ((sample - calib_floor) * CALIB_10 * 10) / (calib_10_delta);
+  if (result > 9999) {
+    result = 9999;
+  }
+  return result;
+}
+
+void calibrateLevels() {
+  digitalWrite(PIN_TADrv, HIGH);
+  pinMode(PIN_TADrv, OUTPUT);
+
+  calib_floor = samplePinWithPinLow(PIN_TA_10, PIN_TA);
+  calib_10_delta = samplePinWithPinLow(PIN_TA, PIN_TA_10) - calib_floor;
+
+  pinMode(PIN_TADrv, INPUT);
+  pinMode(PIN_TA, INPUT);
+  pinMode(PIN_TA_10, INPUT);
+
+}
 
 void pinSetup() {
+  digitalWrite(PIN_TADrv, HIGH);
+  digitalWrite(PIN_TBDrv, HIGH);
+  digitalWrite(PIN_TCDrv, HIGH);
+  pinMode(PIN_TADrv, INPUT);
+  pinMode(PIN_TBDrv, INPUT);
+  pinMode(PIN_TCDrv, INPUT);
+
   pinMode(PIN_TA1, INPUT);
   digitalWrite(PIN_TA1, LOW);
   pinMode(PIN_TB1, INPUT);
@@ -45,41 +88,25 @@ void setup() {
 
   analogSetup();
   pinSetup();
+
+  calibrateLevels();
 }
 
-
-uint32_t adc_AA1;
-uint32_t adc_AB;
-uint32_t adc_AC;
-uint32_t adc_BB1;
-uint32_t adc_BC;
-uint32_t adc_CC1;
-
-
-uint32_t samplePinWithPinLow(uint32_t samplePin, uint32_t lowPin) {
-
-  pinMode(lowPin, OUTPUT);
-  digitalWrite(lowPin, LOW);
-  // sleep(10);
-  Serial.printf("Set       %d low \n", lowPin);
-  Serial.printf("Readback  %d %d \n", lowPin, digitalRead(lowPin));
-
-  uint32_t result = analogReadOversample(samplePin, 16);
-  pinMode(lowPin, INPUT);
-  return result;
-}
 
 void loop() {
-  Serial.println("loop()");
+  //Serial.println("loop()");
 
-  adc_AA1 = samplePinWithPinLow(PIN_TA, PIN_TA1);
-  adc_AB = samplePinWithPinLow(PIN_TA, PIN_TB);
-  adc_AC = samplePinWithPinLow(PIN_TA, PIN_TC);
-  adc_BB1 = samplePinWithPinLow(PIN_TB, PIN_TB1);
-  adc_BC = samplePinWithPinLow(PIN_TB, PIN_TC);
-  adc_CC1 = samplePinWithPinLow(PIN_TC, PIN_TC1);
+  samplePins();
 
   Serial.printf("raw adc_AA1: %4d\n", adc_AA1);
+  Serial.printf("raw adc_AA1: %4d\n", adc_AA1);
+
+  r_AA1 = covert_to_ohms(adc_AA1);
+  r_AB = covert_to_ohms(adc_AB);
+  r_AC = covert_to_ohms(adc_AC);
+  r_BB1 = covert_to_ohms(adc_BB1);
+  r_BC = covert_to_ohms(adc_BC);
+  r_CC1 = covert_to_ohms(adc_CC1);
 
  // double height.
   display.setTextSize(1,2);
@@ -88,39 +115,41 @@ void loop() {
   //display.setTextColor(SSD1306_WHITE);
   display.setCursor(0,0);
 
-  display.printf("A %4d  B %4d C %4d\n", adc_AA1, adc_BB1, adc_CC1);
-  display.printf("AB%4d AC %4d BC%4d\n", adc_AB, adc_AC, adc_BC);
+  display.printf("A %4d  B %4d C %4d\n", r_AA1, r_BB1, r_CC1);
+  display.printf("AB%4d AC %4d BC%4d\n", r_AB, r_AC, r_BC);
+  // display.printf("A %4d  B %4d C %4d\n", adc_AA1, adc_BB1, adc_CC1);
+  // display.printf("AB%4d AC %4d BC%4d\n", adc_AB, adc_AC, adc_BC);
 
   display.display();
 
+}
 
-  // if(!digitalRead(BUTTON_A)) {
-  //   pinMode(PIN_A3, OUTPUT);
-  //   digitalWrite(PIN_A3, LOW);
-  // } else {
-  //   // pinMode(PIN_A3, INPUT);
-  // }
-  // if(!digitalRead(BUTTON_B)) {
-  //   pinMode(PIN_A4, OUTPUT);
-  //   digitalWrite(PIN_A4, LOW);
-  // } else {
-  //   // pinMode(PIN_A4, INPUT);
-  // }
-  // if(!digitalRead(BUTTON_C)) {
-  //   pinMode(PIN_A5, OUTPUT);
-  //   digitalWrite(PIN_A5, LOW);
-  // } else {
-  //   // pinMode(PIN_A5, INPUT);
-  // }
-  //if(!digitalRead(BUTTON_C)) display.print("C");
-  // delay(10);
-  // yield();
-  // if (enabled) {
-  //   pinMode(PIN_A4, OUTPUT);
-  //   digitalWrite(PIN_A4, value);
-  // } else {
-  //   pinMode(PIN_A4, INPUT);
-  // }
+
+void samplePins() {
+
+  digitalWrite(PIN_TADrv, HIGH);
+  pinMode(PIN_TADrv, OUTPUT);
+
+  adc_AA1 = samplePinWithPinLow(PIN_TA, PIN_TA1);
+  adc_AB = samplePinWithPinLow(PIN_TA, PIN_TB);
+  adc_AC = samplePinWithPinLow(PIN_TA, PIN_TC);
+
+  pinMode(PIN_TADrv, INPUT);
+
+  digitalWrite(PIN_TBDrv, HIGH);
+  pinMode(PIN_TBDrv, OUTPUT);
+
+  adc_BB1 = samplePinWithPinLow(PIN_TB, PIN_TB1);
+  adc_BC = samplePinWithPinLow(PIN_TB, PIN_TC);
+
+  pinMode(PIN_TBDrv, INPUT);
+
+  digitalWrite(PIN_TCDrv, HIGH);
+  pinMode(PIN_TCDrv, OUTPUT);
+
+  adc_CC1 = samplePinWithPinLow(PIN_TC, PIN_TC1);
+
+  pinMode(PIN_TCDrv, INPUT);
 
 }
 

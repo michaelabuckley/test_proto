@@ -5,7 +5,8 @@ const char adc_bits_norm = 13;
 float adc_scale = 4095.0F;
 //char adc_bits = 10;
 //float adc_scale = 1023.0F;
-int adc_gain = 1;
+//int adc_gain = 1;
+int adc_gain = 8;
 //int adc_gain = 16;
 
 
@@ -36,4 +37,20 @@ uint32_t analogReadOversample(uint32_t pin, char samples) {
   adc_read /= samples;
   return adc_read;
 }
+
+
+uint32_t samplePinWithPinLow(uint32_t samplePin, uint32_t lowPin) {
+
+  pinMode(lowPin, OUTPUT);
+  digitalWrite(lowPin, LOW);
+  // sleep(10);
+  Serial.printf("Set       %d low \n", lowPin);
+  Serial.printf("Readback  %d %d \n", lowPin, digitalRead(lowPin));
+
+  uint32_t result = analogReadOversample(samplePin, 16);
+  pinMode(lowPin, INPUT);
+  return result;
+}
+
+
 
