@@ -67,6 +67,8 @@ void display_msg(const char *s) {
 }
 
 void draw_msg(const char *s) {
+  display.clearDisplay();
+
   display.setTextSize(2,2);
 // erase as we write text
   display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
@@ -81,7 +83,10 @@ void draw_msg(const char *s) {
 
 #define DISPLAY_MODE_AVG 0
 #define DISPLAY_MODE_MAX 1
-#define DISPLAY_MODE_CALIBRATION 2
+#define DISPLAY_MODE_AVG_RAW 2
+#define DISPLAY_MODE_MAX_RAW 3
+#define DISPLAY_MODE_CALIBRATION 4
+#define DISPLAY_MODE_COUNT 5
 
 char display_mode = DISPLAY_MODE_AVG;
 
@@ -104,7 +109,7 @@ void draw_calibration() {
 }
 
 void change_mode() {
-  display_mode = (display_mode + 1) % 3;
+  display_mode = (display_mode + 1) % DISPLAY_MODE_COUNT;
   char s[30];
   sprintf(s, "Mode: %d", display_mode);
   display_msg(s);
@@ -127,10 +132,16 @@ void loop() {
 
   switch(display_mode) {
     case DISPLAY_MODE_AVG:
-      draw_all_samples(&avg_resistance);
+      draw_all_samples(&resistance_avg);
       break;
     case DISPLAY_MODE_MAX:
-      draw_all_samples(&max_resistance);
+      draw_all_samples(&resistance_max);
+      break;
+    case DISPLAY_MODE_AVG_RAW:
+      draw_all_samples(&adc_avg);
+      break;
+    case DISPLAY_MODE_MAX_RAW:
+      draw_all_samples(&adc_max);
       break;
     case DISPLAY_MODE_CALIBRATION:
       draw_calibration();

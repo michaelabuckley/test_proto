@@ -17,8 +17,10 @@ typedef union {
 } Sample;
 
 
-extern Sample avg_resistance;
-extern Sample max_resistance;
+extern Sample resistance_avg;
+extern Sample resistance_max;
+extern Sample adc_avg;
+extern Sample adc_max;
 
 void analogSetup();
 

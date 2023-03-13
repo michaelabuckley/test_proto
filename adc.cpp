@@ -1,19 +1,16 @@
 #include "wiring_analog.h"
 #include "board_wiring.h"
 #include "adc.h"
+#include "new_adc.h"
 
 const char adc_bits = 12;
 const char adc_bits_norm = 13;
-float adc_scale = 4095.0F;
 //char adc_bits = 10;
-//float adc_scale = 1023.0F;
+
 //int adc_gain = 1;
 const int adc_gain = 4;
 //int adc_gain = 16;
-const int adc_oversample = 16;
-
-
-
+const int adc_oversample = 1;
 const char adc_norm_scale = 1ul<<(adc_bits_norm - adc_bits);
 
 // adc read with pin low
@@ -23,8 +20,8 @@ int32_t calib_10_delta;
 #define CALIB_10 10
 
 Sample adc = {0};
-Sample avg_resistance = {0};
-Sample max_resistance = {0};
+Sample resistance_avg = {0};
+Sample resistance_max = {0};
 
 #define ADC_SAMPLE_COUNT (4)
 
@@ -74,13 +71,13 @@ void take_sample() {
 
   smooth_samples();
 
-  convert_to_ohms(&adc_avg, &avg_resistance);
-  convert_to_ohms(&adc_max, &max_resistance);
+  convert_to_ohms(&adc_avg, &resistance_avg);
+  convert_to_ohms(&adc_max, &resistance_max);
 }
 
 
 void analogSetup() {
-  analogReadResolution(adc_bits);
+  analogReadResolutionNew(adc_bits);
   //analogReference(AR_EXTERNAL);
   analogReference(AR_DEFAULT);
   if (adc_gain == 1) {
@@ -99,7 +96,7 @@ void analogSetup() {
 uint32_t analogReadOversample(uint32_t pin, char samples) {
   uint32_t adc_read = 0;
   for (int i=0; i < samples * adc_norm_scale ; ++i) {
-  adc_read += (analogRead(pin));
+  adc_read += (analogReadNew(pin));
   }
   adc_read /= samples;
   return adc_read;
