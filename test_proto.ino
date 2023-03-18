@@ -8,6 +8,15 @@
 #include "oled.h"
 
 
+#define DISPLAY_MODE_AVG 0
+#define DISPLAY_MODE_MAX 1
+#define DISPLAY_MODE_AVG_RAW 2
+#define DISPLAY_MODE_MAX_RAW 3
+#define DISPLAY_MODE_CALIBRATION 4
+#define DISPLAY_MODE_COUNT 5
+
+char display_mode = DISPLAY_MODE_AVG_RAW;
+
 
 void pinSetup() {
   digitalWrite(PIN_TADrv, HIGH);
@@ -42,6 +51,9 @@ void setup() {
   pinSetup();
 
   calibrateLevels();
+
+  display_current_mode();
+
 }
 
 void draw_all_samples(Sample *r) {
@@ -81,15 +93,6 @@ void draw_msg(const char *s) {
   delay(400);
 }
 
-#define DISPLAY_MODE_AVG 0
-#define DISPLAY_MODE_MAX 1
-#define DISPLAY_MODE_AVG_RAW 2
-#define DISPLAY_MODE_MAX_RAW 3
-#define DISPLAY_MODE_CALIBRATION 4
-#define DISPLAY_MODE_COUNT 5
-
-char display_mode = DISPLAY_MODE_AVG;
-
 extern int32_t calib_floor;
 extern int32_t calib_10_delta;
 
@@ -110,6 +113,10 @@ void draw_calibration() {
 
 void change_mode() {
   display_mode = (display_mode + 1) % DISPLAY_MODE_COUNT;
+  display_current_mode();
+}
+
+void display_current_mode() {
   char s[30];
   sprintf(s, "Mode: %d", display_mode);
   display_msg(s);
