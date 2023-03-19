@@ -41,5 +41,35 @@
 			<type>2</type>
 			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/adafruit/hardware/samd/1.7.11/variants/feather_m0</locationURI>
 		</link>
+		<link>
+			<name>libraries/Adafruit_BusIO</name>
+			<type>2</type>
+			<location>/Users/michael.buckley/Documents/Arduino/libraries/Adafruit_BusIO</location>
+		</link>
+		<link>
+			<name>libraries/Adafruit_GFX_Library</name>
+			<type>2</type>
+			<location>/Users/michael.buckley/Documents/Arduino/libraries/Adafruit_GFX_Library</location>
+		</link>
+		<link>
+			<name>libraries/Adafruit_SSD1306</name>
+			<type>2</type>
+			<location>/Users/michael.buckley/Documents/Arduino/libraries/Adafruit_SSD1306</location>
+		</link>
+		<link>
+			<name>libraries/Adafruit_ZeroDMA</name>
+			<type>2</type>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/adafruit/hardware/samd/1.7.11/libraries/Adafruit_ZeroDMA</locationURI>
+		</link>
+		<link>
+			<name>libraries/SPI</name>
+			<type>2</type>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/adafruit/hardware/samd/1.7.11/libraries/SPI</locationURI>
+		</link>
+		<link>
+			<name>libraries/Wire</name>
+			<type>2</type>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/adafruit/hardware/samd/1.7.11/libraries/Wire</locationURI>
+		</link>
 	</linkedResources>
 </projectDescription>
