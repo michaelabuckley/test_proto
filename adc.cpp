@@ -224,15 +224,7 @@ void samplePins(Sample *sample) {
 
 }
 
-
-
-void samplePinsNew(Sample *sample) {
-  // Samples from A
-  pinMode(PIN_TADrv, OUTPUT);
-  digitalWrite(PIN_TADrv, HIGH);
-
-  pinPeripheral(pin, PIO_ANALOG);
-  // Control A
+void rawAdcEnable() {
   /*
    * Bit 1 ENABLE: Enable
    *   0: The ADC is disabled.
@@ -247,7 +239,22 @@ void samplePinsNew(Sample *sample) {
   syncADC();
   ADC->CTRLA.bit.ENABLE = 0x01;             // Enable ADC
   syncADC();
-  ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[pin].ulADCChannelNumber; // Selection for the positive ADC input
+
+}
+
+
+
+void samplePinsNew(Sample *sample) {
+  rawAdcEnable();
+
+  // Samples from A
+  pinMode(PIN_TADrv, OUTPUT);
+  digitalWrite(PIN_TADrv, HIGH);
+
+  pinPeripheral(PIN_TA, PIO_ANALOG);
+
+  
+  ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[PIN_TA].ulADCChannelNumber; // Selection for the positive ADC input
 
 
   // Sample A-A1
@@ -278,13 +285,11 @@ void samplePinsNew(Sample *sample) {
 
   // Store the value
   while (ADC->INTFLAG.bit.RESRDY == 0);   // Waiting for conversion to complete
-  valueRead = ADC->RESULT.reg;
+  sample->sAA1 = mapResolution(ADC->RESULT.reg, _ADCResolution, _readResolution);
 
   syncADC();
   ADC->CTRLA.bit.ENABLE = 0x00;             // Disable ADC
   syncADC();
-
-  return mapResolution(valueRead, _ADCResolution, _readResolution);
 
 /////
 
@@ -343,21 +348,6 @@ void convert_to_ohms(Sample *in_adc, Sample *out_r) {
 }
 
 
-
-#ifndef _SAMD21_ADC_COMPONENT_
-#error "SAMD21 only"
-#endif
-
-static int _readResolution = 10;
-static int _ADCResolution = 10;
-
-// Wait for synchronization of registers between the clock domains
-static __inline__ void syncADC() __attribute__((always_inline, unused));
-static void syncADC() {
-  while (ADC->STATUS.bit.SYNCBUSY == 1)
-    ;
-}
-
 // // Wait for synchronization of registers between the clock domains
 // static __inline__ void syncTC_16(Tc* TCx) __attribute__((always_inline, unused));
 // static void syncTC_16(Tc* TCx) {
@@ -387,19 +377,6 @@ void analogReadResolutionNew(int res)
 
   syncADC();
 }
-
-
-static inline uint32_t mapResolution(uint32_t value, uint32_t from, uint32_t to)
-{
-  if (from == to) {
-    return value;
-  }
-  if (from > to) {
-    return value >> (from-to);
-  }
-  return value << (to-from);
-}
-
 
 uint32_t analogReadNew(uint32_t pin)
 {
