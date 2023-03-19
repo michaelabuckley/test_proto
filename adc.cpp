@@ -57,6 +57,35 @@ Sample adc_samples[ADC_SAMPLE_COUNT];
 Sample adc_avg;
 Sample adc_max;
 
+
+#ifndef _SAMD21_ADC_COMPONENT_
+#error "SAMD21 only"
+#endif
+
+static int _readResolution = 10;
+static int _ADCResolution = 10;
+
+// Wait for synchronization of registers between the clock domains
+static __inline__ void syncADC() __attribute__((always_inline, unused));
+static void syncADC() {
+  while (ADC->STATUS.bit.SYNCBUSY == 1)
+    ;
+}
+
+
+static inline uint32_t mapResolution(uint32_t value, uint32_t from, uint32_t to)
+{
+  if (from == to) {
+    return value;
+  }
+  if (from > to) {
+    return value >> (from-to);
+  }
+  return value << (to-from);
+}
+
+
+
 void smooth_samples() {
   adc_avg = (const Sample){ 0 };
   adc_max = (const Sample){ 0 };
