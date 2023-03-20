@@ -30,20 +30,20 @@ uint32_t analogReadNew( uint32_t ulPin ) ;
 void analogReadResolutionNew(int res);
 
 
-const char adc_bits = 12;
-const char adc_bits_norm = 12;
+const char adc_bits = 10;
+const char adc_bits_norm = 10;
 //char adc_bits = 10;
 
 //int adc_gain = 1;
-const int adc_gain = 4;
+const int adc_gain = 1;
 //int adc_gain = 16;
 const int adc_oversample = 1;
 const char adc_norm_scale = 1ul<<(adc_bits_norm - adc_bits);
 
 // adc read with pin low
-int32_t calib_floor;
+int32_t calib_floor = 0;
 // adc read with pin 10 ohm to low
-int32_t calib_10_delta;
+int32_t calib_10_delta = 200;
 #define CALIB_10 10
 
 Sample adc = {0};
@@ -134,8 +134,8 @@ void take_sample() {
 
 void analogSetup() {
   analogReadResolutionNew(adc_bits);
-  //analogReference(AR_EXTERNAL);
-  analogReference(AR_DEFAULT);
+  analogReference(AR_EXTERNAL);
+  //analogReference(AR_DEFAULT);
   if (adc_gain == 1) {
     ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val;
   } else if (adc_gain == 2) {
@@ -175,16 +175,16 @@ uint32_t samplePinWithPinLow(uint32_t samplePin, uint32_t lowPin) {
 
 
 void calibrateLevels() {
-  pinMode(PIN_TADrv, OUTPUT);
-  digitalWrite(PIN_TADrv, HIGH);
-  delay(1);
+//  pinMode(PIN_TADrv, OUTPUT);
+//  digitalWrite(PIN_TADrv, HIGH);
+//  delay(1);
 
-  calib_floor = samplePinWithPinLow(PIN_TA_10, PIN_TA);
-  calib_10_delta = samplePinWithPinLow(PIN_TA, PIN_TA_10) - calib_floor;
+//  calib_floor = samplePinWithPinLow(PIN_TA_10, PIN_TA);
+//  calib_10_delta = samplePinWithPinLow(PIN_TA, PIN_TA_10) - calib_floor;
 
   pinMode(PIN_TADrv, INPUT);
   pinMode(PIN_TA, INPUT);
-  pinMode(PIN_TA_10, INPUT);
+//  pinMode(PIN_TA_10, INPUT);
 
 }
 
@@ -243,78 +243,79 @@ void rawAdcEnable() {
 }
 
 
+//	  rawAdcEnable();
+//
+//  // Samples from A
+//  pinMode(PIN_TADrv, OUTPUT);
+//  digitalWrite(PIN_TADrv, HIGH);
+//
+//  pinPeripheral(PIN_TA, PIO_ANALOG);
+//
+//
+//  ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[PIN_TA].ulADCChannelNumber; // Selection for the positive ADC input
+//
+//
+//  // Sample A-A1
+//  pinMode(PIN_TA1, OUTPUT);
+//  digitalWrite(PIN_TA1, LOW);
+//  sample->sAA1 = analogReadNew(PIN_TA);
+//
+//
+////////
+//
+//
+//  // SAMD21 CODE
+//
+//
+//  // Start conversion
+//  syncADC();
+//  ADC->SWTRIG.bit.START = 1;
+//
+//  // Waiting for the 1st conversion to complete
+//  while (ADC->INTFLAG.bit.RESRDY == 0);
+//
+//  // Clear the Data Ready flag
+//  ADC->INTFLAG.reg = ADC_INTFLAG_RESRDY;
+//
+//  // Start conversion again, since The first conversion after the reference is changed must not be used.
+//  syncADC();
+//  ADC->SWTRIG.bit.START = 1;
+//
+//  // Store the value
+//  while (ADC->INTFLAG.bit.RESRDY == 0);   // Waiting for conversion to complete
+//  sample->sAA1 = mapResolution(ADC->RESULT.reg, _ADCResolution, _readResolution);
+//
+//  syncADC();
+//  ADC->CTRLA.bit.ENABLE = 0x00;             // Disable ADC
+//  syncADC();
+//  pinMode(PIN_TA1, INPUT); // release
+//
+///////
+
+
 
 void samplePinsNew(Sample *sample) {
-  rawAdcEnable();
-
-  // Samples from A
-  pinMode(PIN_TADrv, OUTPUT);
   digitalWrite(PIN_TADrv, HIGH);
+  pinMode(PIN_TADrv, OUTPUT);
 
-  pinPeripheral(PIN_TA, PIO_ANALOG);
-
-  
-  ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[PIN_TA].ulADCChannelNumber; // Selection for the positive ADC input
-
-
-  // Sample A-A1
-  pinMode(PIN_TA1, OUTPUT);
-  digitalWrite(PIN_TA1, LOW);
-  sample->sAA1 = analogReadNew(PIN_TA);
-
-
-//////
-
-
-  // SAMD21 CODE 
-  
-
-  // Start conversion
-  syncADC();
-  ADC->SWTRIG.bit.START = 1;
-
-  // Waiting for the 1st conversion to complete
-  while (ADC->INTFLAG.bit.RESRDY == 0);
-
-  // Clear the Data Ready flag
-  ADC->INTFLAG.reg = ADC_INTFLAG_RESRDY;
-
-  // Start conversion again, since The first conversion after the reference is changed must not be used.
-  syncADC();
-  ADC->SWTRIG.bit.START = 1;
-
-  // Store the value
-  while (ADC->INTFLAG.bit.RESRDY == 0);   // Waiting for conversion to complete
-  sample->sAA1 = mapResolution(ADC->RESULT.reg, _ADCResolution, _readResolution);
-
-  syncADC();
-  ADC->CTRLA.bit.ENABLE = 0x00;             // Disable ADC
-  syncADC();
-
-/////
-
-
-
-  pinMode(PIN_TA1, INPUT); // release
-
-
-  sample->sAB = samplePinWithPinLow(PIN_TA, PIN_TB);
-  sample->sAC = samplePinWithPinLow(PIN_TA, PIN_TC);
+  sample->sAA1 = samplePinWithPinLow(PIN_TA, PIN_TA1Drv);
+  sample->sAB = samplePinWithPinLow(PIN_TA, PIN_TBDrv);
+  sample->sAC = samplePinWithPinLow(PIN_TA, PIN_TCDrv);
 
   pinMode(PIN_TADrv, INPUT);
 
   digitalWrite(PIN_TBDrv, HIGH);
   pinMode(PIN_TBDrv, OUTPUT);
 
-  sample->sBB1 = samplePinWithPinLow(PIN_TB, PIN_TB1);
-  sample->sBC = samplePinWithPinLow(PIN_TB, PIN_TC);
+  sample->sBB1 = samplePinWithPinLow(PIN_TB, PIN_TB1Drv);
+  sample->sBC = samplePinWithPinLow(PIN_TB, PIN_TCDrv);
 
   pinMode(PIN_TBDrv, INPUT);
 
   digitalWrite(PIN_TCDrv, HIGH);
   pinMode(PIN_TCDrv, OUTPUT);
 
-  sample->sCC1 = samplePinWithPinLow(PIN_TC, PIN_TC1);
+  sample->sCC1 = samplePinWithPinLow(PIN_TC, PIN_TC1Drv);
 
   pinMode(PIN_TCDrv, INPUT);
 
@@ -362,6 +363,7 @@ void convert_to_ohms(Sample *in_adc, Sample *out_r) {
 
 void analogReadResolutionNew(int res)
 {
+  analogReadResolution(res);
   _readResolution = res;
 
 	if (res > 10) {

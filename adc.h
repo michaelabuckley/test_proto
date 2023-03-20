@@ -1,6 +1,8 @@
 #include <SPI.h>
 #include <Wire.h>
 
+#pragma once
+
 // 6 samples we collect.  ADC samples are < 16 bits.  int32 is large enough to do sums and conversions
 #define SAMPLE_COMPONENT_COUNT (6)
 typedef int32_t sample_t;

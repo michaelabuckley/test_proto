@@ -7,6 +7,8 @@
 #include "adc.h"
 #include "oled.h"
 
+void display_current_mode();
+
 
 #define DISPLAY_MODE_AVG 0
 #define DISPLAY_MODE_MAX 1
