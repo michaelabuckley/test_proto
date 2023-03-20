@@ -10,6 +10,7 @@ uint32_t samplePinWithPinLow(uint32_t samplePin, uint32_t lowPin);
 void samplePins(Sample *sample);
 void samplePinsNew(Sample *sample);
 void convert_to_ohms(Sample *in_adc, Sample *out_r);
+uint32_t adcRawReadDifferential(uint32_t highDiffPin, uint32_t lowDiffPin);
 
 
 
@@ -20,7 +21,7 @@ void convert_to_ohms(Sample *in_adc, Sample *out_r);
  *
  * \return Read value from selected pin, if no error.
  */
-uint32_t analogReadNew( uint32_t ulPin ) ;
+uint32_t rawAdcAnalogRead( uint32_t ulPin ) ;
 
 /*
  * \brief Set the resolution of analogRead return values. Default is 10 bits (range from 0 to 1023).
@@ -30,12 +31,12 @@ uint32_t analogReadNew( uint32_t ulPin ) ;
 void analogReadResolutionNew(int res);
 
 
-const char adc_bits = 10;
-const char adc_bits_norm = 10;
+const char adc_bits = 12;
+const char adc_bits_norm = 12;
 //char adc_bits = 10;
 
 //int adc_gain = 1;
-const int adc_gain = 1;
+const int adc_gain = 4;
 //int adc_gain = 16;
 const int adc_oversample = 1;
 const char adc_norm_scale = 1ul<<(adc_bits_norm - adc_bits);
@@ -62,8 +63,8 @@ Sample adc_max;
 #error "SAMD21 only"
 #endif
 
-static int _readResolution = 10;
-static int _ADCResolution = 10;
+static int _readResolution = 12;
+static int _ADCResolution = 12;
 
 // Wait for synchronization of registers between the clock domains
 static __inline__ void syncADC() __attribute__((always_inline, unused));
@@ -115,7 +116,7 @@ void check_floor(Sample *sample) {
        sample->sCC1);
   if (new_floor < calib_floor) {
     Serial.printf("Floor change from %d to %d\n", calib_floor, new_floor);
-    calib_floor = new_floor;
+    //calib_floor = new_floor;
   }
 }
 
@@ -152,7 +153,7 @@ void analogSetup() {
 uint32_t analogReadOversample(uint32_t pin, char samples) {
   uint32_t adc_read = 0;
   for (int i=0; i < samples * adc_norm_scale ; ++i) {
-  adc_read += (analogReadNew(pin));
+  adc_read += (rawAdcAnalogRead(pin));
   }
   adc_read /= samples;
   return adc_read;
@@ -175,10 +176,14 @@ uint32_t samplePinWithPinLow(uint32_t samplePin, uint32_t lowPin) {
 
 
 void calibrateLevels() {
-//  pinMode(PIN_TADrv, OUTPUT);
-//  digitalWrite(PIN_TADrv, HIGH);
-//  delay(1);
+  pinMode(PIN_TADrv, OUTPUT);
+  digitalWrite(PIN_TADrv, HIGH);
+  delay(1);
 
+  // fixme add 10R calibration back in.
+  // hacky adc config check -
+  //samplePins(&(adc_samples[0]));
+  //calib_floor = adcRawReadDifferential(PIN_TA, PIN_TA);
 //  calib_floor = samplePinWithPinLow(PIN_TA_10, PIN_TA);
 //  calib_10_delta = samplePinWithPinLow(PIN_TA, PIN_TA_10) - calib_floor;
 
@@ -192,7 +197,10 @@ void calibrateLevels() {
  * Use current AA1 as 0.
  */
 void external_calibration() {
+  int32_t old_floor;
+  old_floor = calib_floor;
   calib_floor = adc_avg.sAA1;
+  Serial.printf("external_calibration: %d to %d\n", old_floor, calib_floor);
 }
 
 
@@ -238,6 +246,7 @@ void rawAdcEnable() {
    */
   syncADC();
   ADC->CTRLA.bit.ENABLE = 0x01;             // Enable ADC
+  syncADC();
 
 }
 
@@ -291,34 +300,85 @@ void rawAdcEnable() {
 //
 ///////
 
+
+uint32_t adcRawReadDifferential(uint32_t highDiffPin, uint32_t lowDiffPin) {
+
+  uint32_t valueRead = 0;
+
+  pinPeripheral(highDiffPin, PIO_ANALOG);
+  pinPeripheral(lowDiffPin, PIO_ANALOG);
+
+  // SAMD21 CODE
+  syncADC();
+  ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[highDiffPin].ulADCChannelNumber; // Selection for the positive ADC input
+  syncADC();
+  ADC->INPUTCTRL.bit.MUXNEG = g_APinDescription[lowDiffPin].ulADCChannelNumber; // Selection for the positive ADC input
+
+
+  syncADC();
+  ADC->CTRLB.bit.DIFFMODE = 0;
+  syncADC();
+  ADC->AVGCTRL.bit.SAMPLENUM = ADC_AVGCTRL_SAMPLENUM_4_Val;
+  ADC->AVGCTRL.bit.ADJRES = 1;
+
+
+  // Start conversion -- we assume the reference isn't changed, and we can reuse the setup
+  syncADC();
+
+  // Clear the Data Ready flag
+  ADC->INTFLAG.reg = ADC_INTFLAG_RESRDY;
+
+  syncADC();
+  ADC->SWTRIG.bit.START = 1;
+
+  // Store the value
+  while (ADC->INTFLAG.bit.RESRDY == 0);   // Waiting for conversion to complete
+  valueRead = ADC->RESULT.reg;
+
+  return mapResolution(valueRead, _ADCResolution, _readResolution);
+}
+
 uint32_t samplePairWithPinLow(uint32_t highDiffPin, uint32_t lowDiffPin, uint32_t lowDrivePin) {
-  return samplePinWithPinLow(highDiffPin, lowDrivePin);
+
+  pinMode(lowDrivePin, OUTPUT);
+  digitalWrite(lowDrivePin, LOW);
+  delay(1);
+  // Serial.printf("Set       %d low \n", lowPin);
+  // Serial.printf("Readback  %d %d \n", lowPin, digitalRead(lowPin));
+
+  uint32_t result = adcRawReadDifferential(highDiffPin, lowDiffPin);
+
+  pinMode(lowDrivePin, INPUT);
+
+  return result;
 }
 
 
 
 void samplePinsNew(Sample *sample) {
-  digitalWrite(PIN_TADrv, HIGH);
+  rawAdcEnable();
+
   pinMode(PIN_TADrv, OUTPUT);
+  digitalWrite(PIN_TADrv, HIGH);
 
   sample->sAA1 = samplePairWithPinLow(PIN_TA, PIN_TA1, PIN_TA1Drv);
-  sample->sAB = samplePairWithPinLow(PIN_TA, PIN_TB, PIN_TBDrv);
-  sample->sAC = samplePairWithPinLow(PIN_TA, PIN_TC, PIN_TCDrv);
+  sample->sAB  = samplePairWithPinLow(PIN_TA, PIN_TB, PIN_TBDrv);
+  sample->sAC  = samplePairWithPinLow(PIN_TA, PIN_TC, PIN_TCDrv);
 
   pinMode(PIN_TADrv, INPUT);
 
-  digitalWrite(PIN_TBDrv, HIGH);
   pinMode(PIN_TBDrv, OUTPUT);
+  digitalWrite(PIN_TBDrv, HIGH);
 
-  sample->sBB1 = samplePinWithPinLow(PIN_TB, PIN_TB1Drv);
-  sample->sBC = samplePinWithPinLow(PIN_TB, PIN_TCDrv);
+  sample->sBB1 = samplePairWithPinLow(PIN_TB, PIN_TB1, PIN_TB1Drv);
+  sample->sBC  = samplePairWithPinLow(PIN_TB, PIN_TC, PIN_TCDrv);
 
   pinMode(PIN_TBDrv, INPUT);
 
-  digitalWrite(PIN_TCDrv, HIGH);
   pinMode(PIN_TCDrv, OUTPUT);
+  digitalWrite(PIN_TCDrv, HIGH);
 
-  sample->sCC1 = samplePinWithPinLow(PIN_TC, PIN_TC1Drv);
+  sample->sCC1 = samplePairWithPinLow(PIN_TC, PIN_TC1, PIN_TC1Drv);
 
   pinMode(PIN_TCDrv, INPUT);
 
@@ -383,7 +443,7 @@ void analogReadResolutionNew(int res)
   syncADC();
 }
 
-uint32_t analogReadNew(uint32_t pin)
+uint32_t rawAdcAnalogRead(uint32_t pin)
 {
  
   uint32_t valueRead = 0;
@@ -394,7 +454,6 @@ uint32_t analogReadNew(uint32_t pin)
   syncADC();
   ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[pin].ulADCChannelNumber; // Selection for the positive ADC input
   
-  rawAdcEnable();
   // Start conversion
   syncADC();
   ADC->SWTRIG.bit.START = 1;
@@ -412,10 +471,6 @@ uint32_t analogReadNew(uint32_t pin)
   // Store the value
   while (ADC->INTFLAG.bit.RESRDY == 0);   // Waiting for conversion to complete
   valueRead = ADC->RESULT.reg;
-
-  syncADC();
-  ADC->CTRLA.bit.ENABLE = 0x00;             // Disable ADC
-  syncADC();
 
   return mapResolution(valueRead, _ADCResolution, _readResolution);
 }
