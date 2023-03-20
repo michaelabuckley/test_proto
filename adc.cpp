@@ -238,7 +238,6 @@ void rawAdcEnable() {
    */
   syncADC();
   ADC->CTRLA.bit.ENABLE = 0x01;             // Enable ADC
-  syncADC();
 
 }
 
@@ -292,15 +291,19 @@ void rawAdcEnable() {
 //
 ///////
 
+uint32_t samplePairWithPinLow(uint32_t highDiffPin, uint32_t lowDiffPin, uint32_t lowDrivePin) {
+  return samplePinWithPinLow(highDiffPin, lowDrivePin);
+}
+
 
 
 void samplePinsNew(Sample *sample) {
   digitalWrite(PIN_TADrv, HIGH);
   pinMode(PIN_TADrv, OUTPUT);
 
-  sample->sAA1 = samplePinWithPinLow(PIN_TA, PIN_TA1Drv);
-  sample->sAB = samplePinWithPinLow(PIN_TA, PIN_TBDrv);
-  sample->sAC = samplePinWithPinLow(PIN_TA, PIN_TCDrv);
+  sample->sAA1 = samplePairWithPinLow(PIN_TA, PIN_TA1, PIN_TA1Drv);
+  sample->sAB = samplePairWithPinLow(PIN_TA, PIN_TB, PIN_TBDrv);
+  sample->sAC = samplePairWithPinLow(PIN_TA, PIN_TC, PIN_TCDrv);
 
   pinMode(PIN_TADrv, INPUT);
 
@@ -391,21 +394,7 @@ uint32_t analogReadNew(uint32_t pin)
   syncADC();
   ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[pin].ulADCChannelNumber; // Selection for the positive ADC input
   
-  // Control A
-  /*
-   * Bit 1 ENABLE: Enable
-   *   0: The ADC is disabled.
-   *   1: The ADC is enabled.
-   * Due to synchronization, there is a delay from writing CTRLA.ENABLE until the peripheral is enabled/disabled. The
-   * value written to CTRL.ENABLE will read back immediately and the Synchronization Busy bit in the Status register
-   * (STATUS.SYNCBUSY) will be set. STATUS.SYNCBUSY will be cleared when the operation is complete.
-   *
-   * Before enabling the ADC, the asynchronous clock source must be selected and enabled, and the ADC reference must be
-   * configured. The first conversion after the reference is changed must not be used.
-   */
-  syncADC();
-  ADC->CTRLA.bit.ENABLE = 0x01;             // Enable ADC
-
+  rawAdcEnable();
   // Start conversion
   syncADC();
   ADC->SWTRIG.bit.START = 1;
