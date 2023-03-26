@@ -2,7 +2,6 @@
 
 Arduino project.
 
-
 ## Design ideas
 
 - need to try differential.  Tired of battling noise at the floor.

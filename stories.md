@@ -1,14 +1,15 @@
 # Stories
 
 ## Current
-- refactor standard to raw calls - compare
+- new library - https://github.com/Molorius/ATSAMD21-ADC
 
 ## Next 
-- try differential
 - baseline testcase - manual short of all probes.  Sample with 10R. 
 
 
 ## Done
+- refactor standard to raw calls - compare - OK
+- try differential, but buggy on C-C1.
 
 ### Self calibrate with an extra pin beside sample pin.
 
